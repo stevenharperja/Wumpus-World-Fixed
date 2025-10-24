@@ -1,10 +1,10 @@
-## TAKEN FROM https://github.com/aimacode/aima-python/blob/master/agents.py
+## Taken from https://github.com/aimacode/aima-python/blob/master/agents.py
 ## Modifications:
 #   Fix death timing, 
 #   stop spawning objects in the rightside and bottomside walls.
 #   Limit percepts to original book specifications (Chapter 7.2, 4th edition)
 #   Removed pit probability magic number
-#   Removed pit appearing in starting location
+#   Removed pits appearing in starting location
 #   Add Json import and export
 
 """
