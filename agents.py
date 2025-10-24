@@ -7,6 +7,7 @@
 #   Removed pits appearing in starting location
 #   Add Json import and export
 #   Add bump percept when you hit a wall
+#   Fix Gold pickup
 
 
 """
@@ -871,7 +872,7 @@ class Explorer(Agent):
 
 class WumpusEnvironment(XYEnvironment):
     # Room should be 4x4 grid of rooms. The extra 2 for walls
-
+    performance = None
     def __init__(self, agent_program, import_filename=None, width=6, height=6, pit_probability=0.2, start_location=(1,1)):
         self.pit_probability = pit_probability
         self.starting_location = start_location
@@ -988,6 +989,7 @@ class WumpusEnvironment(XYEnvironment):
         elif action == 'Climb':
             if agent.location == (1, 1):  # Agent can only climb out of (1,1)
                 agent.performance += 1000 if Gold() in agent.holding else 0
+                self.performance = agent.performance
                 self.delete_thing(agent)
         elif action == 'Shoot':
             """The arrow travels straight down the path the agent is facing"""
@@ -1023,10 +1025,12 @@ class WumpusEnvironment(XYEnvironment):
             if explorer[0].alive:
                 return False
             else:
-                print("Death by {} [-1000].".format(explorer[0].killed_by))
+                print("Death by {}.".format(explorer[0].killed_by))
+                print("Agent performance: {}".format(explorer[0].performance))
         else:
-            print("Explorer climbed out {}."
-                  .format("with Gold [+1000]!" if Gold() not in self.things else "without Gold [+0]"))
+            print("Explorer climbed out ")#{}."
+            #       #.format("with Gold [+1000]!" if Gold() not in self.things else "without Gold [+0]"))
+            print("Agent performance: {}".format(self.performance))
         return True
 
     def export_json(self, filename):
