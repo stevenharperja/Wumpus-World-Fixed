@@ -1015,8 +1015,6 @@ class WumpusEnvironment(XYEnvironment):
                   .format("with Gold [+1000]!" if Gold() not in self.things else "without Gold [+0]"))
         return True
 
-    # TODO: Arrow needs to be implemented
-
 
 # ______________________________________________________________________________
 
