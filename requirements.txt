@@ -1,2 +1,3 @@
 ipythonblocks
 numpy
+json

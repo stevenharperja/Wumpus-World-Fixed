@@ -1,9 +1,11 @@
 ## TAKEN FROM https://github.com/aimacode/aima-python/blob/master/agents.py
-## Modified to fix:
-#   death timing, 
+## Modifications:
+#   Fix death timing, 
 #   stop spawning objects in the rightside and bottomside walls.
-#   Limit percepts to original book specifications (Chapter 7.2)
+#   Limit percepts to original book specifications (Chapter 7.2, 4th edition)
 #   Removed pit probability magic number
+#   Removed pit appearing in starting location
+#   Add Json import and export
 
 """
 Implement Agents and Environments. (Chapters 1-2)
@@ -46,7 +48,7 @@ import random
 import copy
 import collections
 import numbers
-
+import json
 
 # ______________________________________________________________________________
 
@@ -868,10 +870,14 @@ class Explorer(Agent):
 class WumpusEnvironment(XYEnvironment):
     # Room should be 4x4 grid of rooms. The extra 2 for walls
 
-    def __init__(self, agent_program, width=6, height=6, pit_probability=0.2):
+    def __init__(self, agent_program, import_filename=None, width=6, height=6, pit_probability=0.2, start_location=(1,1)):
         self.pit_probability = pit_probability
+        self.starting_location = start_location
         super().__init__(width, height)
-        self.init_world(agent_program)
+        if import_filename is not None:
+            self._import_json(import_filename, agent_program)
+        else:
+            self.init_world(agent_program)
 
     def init_world(self, program):
         """Spawn items in the world based on probabilities from the book"""
@@ -882,6 +888,8 @@ class WumpusEnvironment(XYEnvironment):
         "PITS"
         for x in range(self.x_start, self.x_end):
             for y in range(self.y_start, self.y_end):
+                if (x, y) == self.starting_location:
+                    continue
                 if random.random() < self.pit_probability:
                     self.add_thing(Pit(), (x, y), True)
                     self.add_thing(Breeze(), (x - 1, y), True)
@@ -890,7 +898,7 @@ class WumpusEnvironment(XYEnvironment):
                     self.add_thing(Breeze(), (x, y + 1), True)
 
         "WUMPUS"
-        w_x, w_y = self.random_location_inbounds(exclude=(1, 1))
+        w_x, w_y = self.random_location_inbounds(exclude=self.starting_location)
         self.add_thing(Wumpus(lambda x: ""), (w_x, w_y), True)
         self.add_thing(Stench(), (w_x - 1, w_y), True)
         self.add_thing(Stench(), (w_x + 1, w_y), True)
@@ -898,10 +906,10 @@ class WumpusEnvironment(XYEnvironment):
         self.add_thing(Stench(), (w_x, w_y + 1), True)
 
         "GOLD"
-        self.add_thing(Gold(), self.random_location_inbounds(exclude=(1, 1)), True)
+        self.add_thing(Gold(), self.random_location_inbounds(exclude=self.starting_location), True)
 
         "AGENT"
-        self.add_thing(Explorer(program), (1, 1), True)
+        self.add_thing(Explorer(program), self.starting_location, True)
 
     def get_world(self, show_walls=True):
         """Return the items in the world"""
@@ -1014,6 +1022,56 @@ class WumpusEnvironment(XYEnvironment):
             print("Explorer climbed out {}."
                   .format("with Gold [+1000]!" if Gold() not in self.things else "without Gold [+0]"))
         return True
+
+    def export_json(self, filename):
+        world_dims = (self.width, self.height)
+        world = self.get_world()
+
+        excluded_items = ["Breeze", "Stench", "Glitter", "Bump", "Scream", "Arrow"]
+        to_export = {'world_dims': world_dims, 'world': []}
+        for x in range(len(world)):
+            row = []
+            for y in range(len(world[x])):
+                cell = []
+                for item in world[x][y]:
+                    if item.__class__.__name__ not in excluded_items:
+                        cell.append(item.__class__.__name__)
+                row.append(cell)
+            to_export['world'].append(row)
+        json.dump(to_export, open(filename, "w"), indent=4)
+    
+    def _import_json(self, filename, agent_program):
+        imported = json.load(open(filename, "r"))
+        (self.width, self.height) = tuple(imported['world_dims'])
+        world = imported['world']
+        for x in range(len(world)):
+            for y in range(len(world[x])):
+                for item in world[x][y]:
+                    if item is None:
+                        continue
+                    if item == "Explorer":
+                        self.add_thing(Explorer(agent_program), (x, y), True)
+                        continue
+                    if item == "Wumpus":
+                        self.add_thing(Wumpus(lambda x: ""), (x, y), True)
+                        self.add_thing(Stench(), (x - 1, y), True)
+                        self.add_thing(Stench(), (x, y - 1), True)
+                        self.add_thing(Stench(), (x + 1, y), True)
+                        self.add_thing(Stench(), (x, y + 1), True)
+                        continue
+                    if item == "Pit":
+                        self.add_thing(Pit(), (x, y), True)
+                        self.add_thing(Breeze(), (x - 1, y), True)
+                        self.add_thing(Breeze(), (x, y - 1), True)
+                        self.add_thing(Breeze(), (x + 1, y), True)
+                        self.add_thing(Breeze(), (x, y + 1), True)
+                        continue
+                    if item == "Gold":
+                        self.add_thing(Gold(), (x, y), True)
+                        continue
+                    
+                    cls = globals()[item]
+                    self.add_thing(cls(), (x, y), True)
 
 
 # ______________________________________________________________________________
