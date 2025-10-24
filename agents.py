@@ -6,6 +6,8 @@
 #   Removed pit probability magic number
 #   Removed pits appearing in starting location
 #   Add Json import and export
+#   Add bump percept when you hit a wall
+
 
 """
 Implement Agents and Environments. (Chapters 1-2)
@@ -965,6 +967,10 @@ class WumpusEnvironment(XYEnvironment):
         if len(wumpus) and not wumpus[0].alive and not wumpus[0].screamed:
             result.append(Scream())
             wumpus[0].screamed = True
+        
+        if agent.bump:
+            result.append(Bump())
+            agent.bump = False
 
         return result
 
