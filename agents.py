@@ -3,6 +3,7 @@
 #   death timing, 
 #   stop spawning objects in the rightside and bottomside walls.
 #   Limit percepts to original book specifications (Chapter 7.2)
+#   Removed pit probability magic number
 
 """
 Implement Agents and Environments. (Chapters 1-2)
@@ -865,11 +866,10 @@ class Explorer(Agent):
 
 
 class WumpusEnvironment(XYEnvironment):
-    pit_probability = 0.2  # Probability to spawn a pit in a location. (From Chapter 7.2)
-
     # Room should be 4x4 grid of rooms. The extra 2 for walls
 
-    def __init__(self, agent_program, width=6, height=6):
+    def __init__(self, agent_program, width=6, height=6, pit_probability=0.2):
+        self.pit_probability = pit_probability
         super().__init__(width, height)
         self.init_world(agent_program)
 
