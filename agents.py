@@ -1,5 +1,5 @@
 ## TAKEN FROM https://github.com/aimacode/aima-python/blob/master/agents.py
-## Modified to fix death timing, ...
+## Modified to fix death timing, and stop spawning objects in the rightside and bottomside walls.
 
 """
 Implement Agents and Environments. (Chapters 1-2)
@@ -559,8 +559,8 @@ class XYEnvironment(Environment):
 
     def random_location_inbounds(self, exclude=None):
         """Returns a random location that is inbounds (within walls if we have walls)"""
-        location = (random.randint(self.x_start, self.x_end),
-                    random.randint(self.y_start, self.y_end))
+        location = (random.randint(self.x_start, self.x_end-1),
+                    random.randint(self.y_start, self.y_end-1))
         if exclude is not None:
             while location == exclude:
                 location = (random.randint(self.x_start, self.x_end),
