@@ -1,5 +1,8 @@
 ## TAKEN FROM https://github.com/aimacode/aima-python/blob/master/agents.py
-## Modified to fix death timing, and stop spawning objects in the rightside and bottomside walls.
+## Modified to fix:
+#   death timing, 
+#   stop spawning objects in the rightside and bottomside walls.
+#   Limit percepts to original book specifications (Chapter 7.2)
 
 """
 Implement Agents and Environments. (Chapters 1-2)
@@ -941,17 +944,18 @@ class WumpusEnvironment(XYEnvironment):
         """Return things in adjacent (not diagonal) cells of the agent.
         Result format: [Left, Right, Up, Down, Center / Current location]"""
         x, y = agent.location
-        result = []
-        result.append(self.percepts_from(agent, (x - 1, y)))
-        result.append(self.percepts_from(agent, (x + 1, y)))
-        result.append(self.percepts_from(agent, (x, y - 1)))
-        result.append(self.percepts_from(agent, (x, y + 1)))
-        result.append(self.percepts_from(agent, (x, y)))
+        # result = []
+        # result.append(self.percepts_from(agent, (x - 1, y)))
+        # result.append(self.percepts_from(agent, (x + 1, y)))
+        # result.append(self.percepts_from(agent, (x, y - 1)))
+        # result.append(self.percepts_from(agent, (x, y + 1)))
+        # result.append(self.percepts_from(agent, (x, y)))
+        result = self.percepts_from(agent, (x, y))
 
         """The wumpus gives out a loud scream once it's killed."""
         wumpus = [thing for thing in self.things if isinstance(thing, Wumpus)]
         if len(wumpus) and not wumpus[0].alive and not wumpus[0].screamed:
-            result[-1].append(Scream())
+            result.append(Scream())
             wumpus[0].screamed = True
 
         return result
