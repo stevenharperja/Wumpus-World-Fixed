@@ -873,9 +873,9 @@ class Explorer(Agent):
 class WumpusEnvironment(XYEnvironment):
     # Room should be 4x4 grid of rooms. The extra 2 for walls
     performance = None
-    def __init__(self, agent_program, import_filename=None, width=6, height=6, pit_probability=0.2, start_location=(1,1)):
+    def __init__(self, agent_program, import_filename=None, width=6, height=6, pit_probability=0.2):
+        self.starting_location=(1,1) #Chris said to fix this in place.
         self.pit_probability = pit_probability
-        self.starting_location = start_location
         super().__init__(width, height)
         if import_filename is not None:
             self._import_json(import_filename, agent_program)
@@ -1060,7 +1060,7 @@ class WumpusEnvironment(XYEnvironment):
                     if item is None:
                         continue
                     if item == "Explorer":
-                        self.add_thing(Explorer(agent_program), (x, y), True)
+                        self.add_thing(Explorer(agent_program), self.starting_location, True) #fixed to 1,1 as per Chris's instruction
                         continue
                     if item == "Wumpus":
                         self.add_thing(Wumpus(lambda x: ""), (x, y), True)
