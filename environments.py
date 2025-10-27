@@ -1,25 +1,4 @@
-"""
-Implement Agents and Environments. (Chapters 1-2)
-
-The class hierarchies are as follows:
-
-Thing ## A physical object that can exist in an environment
-    Agent
-        Wumpus
-    Dirt
-    Wall
-    ...
-
-Environment ## An environment holds objects, runs simulations
-    XYEnvironment
-        WumpusEnvironment
-
-"""
-
-from utils import distance_squared, turn_heading
-
 import random
-import collections
 import numbers
 import json
 
