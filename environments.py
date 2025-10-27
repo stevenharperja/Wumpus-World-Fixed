@@ -34,51 +34,9 @@ class Thing:
     def __repr__(self):
         return '<{}>'.format(getattr(self, '__name__', self.__class__.__name__))
 
-    def is_alive(self):
-        """Things that are 'alive' should return true."""
-        return hasattr(self, 'alive') and self.alive
-
-    def show_state(self):
-        """Display the agent's internal state. Subclasses should override."""
-        print("I don't know how to show_state.")
-
-    def display(self, canvas, x, y, width, height):
-        """Display an image of this Thing on the canvas."""
-        # Do we need this?
-        pass
-
 
 class Agent(Thing):
-    """An Agent is a subclass of Thing with one required instance attribute 
-    (aka slot), .program, which should hold a function that takes one argument,
-    the percept, and returns an action. (What counts as a percept or action 
-    will depend on the specific environment in which the agent exists.)
-    Note that 'program' is a slot, not a method. If it were a method, then the
-    program could 'cheat' and look at aspects of the agent. It's not supposed
-    to do that: the program can only look at the percepts. An agent program
-    that needs a model of the world (and of the agent itself) will have to
-    build and maintain its own model. There is an optional slot, .performance,
-    which is a number giving the performance measure of the agent in its
-    environment."""
-
-    def __init__(self, program=None):
-        self.alive = True
-        self.bump = False
-        self.holding = []
-        self.performance = 0
-        if program is None or not isinstance(program, collections.abc.Callable):
-            print("Can't find a valid program for {}, falling back to default.".format(self.__class__.__name__))
-
-            def program(percept):
-                return eval(input('Percept={}; action? '.format(percept)))
-
-        self.program = program
-
-    def can_grab(self, thing):
-        """Return True if this agent can grab this thing.
-        Override for appropriate subclasses of Agent and Thing."""
-        return False
-
+    pass
 # ______________________________________________________________________________
 
 
@@ -97,51 +55,7 @@ class Environment:
         self.things = []
         self.agents = []
 
-    def thing_classes(self):
-        return []  # List of classes that can go into environment
 
-    def percept(self, agent):
-        """Return the percept that the agent sees at this point. (Implement this.)"""
-        raise NotImplementedError
-
-    def execute_action(self, agent, action):
-        """Change the world to reflect this action. (Implement this.)"""
-        raise NotImplementedError
-
-    def default_location(self, thing):
-        """Default location to place a new thing with unspecified location."""
-        return None
-
-    def exogenous_change(self):
-        """If there is spontaneous change in the world, override this."""
-        pass
-
-    def is_done(self):
-        """By default, we're done when we can't find a live agent."""
-        return not any(agent.is_alive() for agent in self.agents)
-
-    def step(self):
-        """Run the environment for one time step. If the
-        actions and exogenous changes are independent, this method will
-        do. If there are interactions between them, you'll need to
-        override this method."""
-        if not self.is_done():
-            actions = []
-            for agent in self.agents:
-                if agent.alive:
-                    actions.append(agent.program(self.percept(agent)))
-                else:
-                    actions.append("")
-            for (agent, action) in zip(self.agents, actions):
-                self.execute_action(agent, action)
-            self.exogenous_change()
-
-    def run(self, steps=1000):
-        """Run the Environment for given number of time steps."""
-        for step in range(steps):
-            if self.is_done():
-                return
-            self.step()
 
     def list_things_at(self, location, tclass=Thing):
         """Return all things exactly at a given location."""
@@ -184,85 +98,6 @@ class Environment:
             self.agents.remove(thing)
 
 
-class Direction:
-    """A direction class for agents that want to move in a 2D plane
-        Usage:
-            d = Direction("down")
-            To change directions:
-            d = d + "right" or d = d + Direction.R #Both do the same thing
-            Note that the argument to __add__ must be a string and not a Direction object.
-            Also, it (the argument) can only be right or left."""
-
-    R = "right"
-    L = "left"
-    U = "up"
-    D = "down"
-
-    def __init__(self, direction):
-        self.direction = direction
-
-    def __add__(self, heading):
-        """
-        >>> d = Direction('right')
-        >>> l1 = d.__add__(Direction.L)
-        >>> l2 = d.__add__(Direction.R)
-        >>> l1.direction
-        'up'
-        >>> l2.direction
-        'down'
-        >>> d = Direction('down')
-        >>> l1 = d.__add__('right')
-        >>> l2 = d.__add__('left')
-        >>> l1.direction == Direction.L
-        True
-        >>> l2.direction == Direction.R
-        True
-        """
-        if self.direction == self.R:
-            return {
-                self.R: Direction(self.D),
-                self.L: Direction(self.U),
-            }.get(heading, None)
-        elif self.direction == self.L:
-            return {
-                self.R: Direction(self.U),
-                self.L: Direction(self.D),
-            }.get(heading, None)
-        elif self.direction == self.U:
-            return {
-                self.R: Direction(self.R),
-                self.L: Direction(self.L),
-            }.get(heading, None)
-        elif self.direction == self.D:
-            return {
-                self.R: Direction(self.L),
-                self.L: Direction(self.R),
-            }.get(heading, None)
-
-    def move_forward(self, from_location):
-        """
-        >>> d = Direction('up')
-        >>> l1 = d.move_forward((0, 0))
-        >>> l1
-        (0, -1)
-        >>> d = Direction(Direction.R)
-        >>> l1 = d.move_forward((0, 0))
-        >>> l1
-        (1, 0)
-        """
-        # get the iterable class to return
-        iclass = from_location.__class__
-        x, y = from_location
-        if self.direction == self.R:
-            return iclass((x + 1, y))
-        elif self.direction == self.L:
-            return iclass((x - 1, y))
-        elif self.direction == self.U:
-            return iclass((x, y - 1))
-        elif self.direction == self.D:
-            return iclass((x, y + 1))
-
-
 class XYEnvironment(Environment):
     """This class is for environments on a 2D plane, with locations
     labelled by (x, y) points, either discrete or continuous.
@@ -283,60 +118,6 @@ class XYEnvironment(Environment):
         self.x_end, self.y_end = (self.width, self.height)
 
     perceptible_distance = 1
-
-    def things_near(self, location, radius=None):
-        """Return all things within radius of location."""
-        if radius is None:
-            radius = self.perceptible_distance
-        radius2 = radius * radius
-        return [(thing, radius2 - distance_squared(location, thing.location))
-                for thing in self.things if distance_squared(
-                location, thing.location) <= radius2]
-
-    def percept(self, agent):
-        """By default, agent perceives things within a default radius."""
-        return self.things_near(agent.location)
-
-    def execute_action(self, agent, action):
-        agent.bump = False
-        if action == 'TurnRight':
-            agent.direction += Direction.R
-        elif action == 'TurnLeft':
-            agent.direction += Direction.L
-        elif action == 'Forward':
-            agent.bump = self.move_to(agent, agent.direction.move_forward(agent.location))
-        elif action == 'Grab':
-            things = [thing for thing in self.list_things_at(agent.location) if agent.can_grab(thing)]
-            if things:    
-                agent.holding.append(things[0])
-                print("Grabbing ", things[0].__class__.__name__)
-                self.delete_thing(things[0])
-        elif action == 'Release':
-            if agent.holding:
-                dropped = agent.holding.pop()
-                print("Dropping ", dropped.__class__.__name__)
-                self.add_thing(dropped, location=agent.location)
-
-    def default_location(self, thing):
-        location = self.random_location_inbounds()
-        while self.some_things_at(location, Obstacle):
-            # we will find a random location with no obstacles
-            location = self.random_location_inbounds()
-        return location
-
-    def move_to(self, thing, destination):
-        """Move a thing to a new location. Returns True on success or False if there is an Obstacle.
-        If thing is holding anything, they move with him."""
-        thing.bump = self.some_things_at(destination, Obstacle)
-        if not thing.bump:
-            thing.location = destination
-            for o in self.observers:
-                o.thing_moved(thing)
-            for t in thing.holding:
-                self.delete_thing(t)
-                self.add_thing(t, destination)
-                t.location = destination
-        return thing.bump
 
     def add_thing(self, thing, location=None, exclude_duplicate_class_items=False):
         """Add things to the world. If (exclude_duplicate_class_items) then the item won't be
@@ -385,20 +166,6 @@ class XYEnvironment(Environment):
         # Updates iteration start and end (with walls).
         self.x_start, self.y_start = (1, 1)
         self.x_end, self.y_end = (self.width - 1, self.height - 1)
-
-    def add_observer(self, observer):
-        """Adds an observer to the list of observers.
-        An observer is typically an EnvGUI.
-
-        Each observer is notified of changes in move_to and add_thing,
-        by calling the observer's methods thing_moved(thing)
-        and thing_added(thing, loc)."""
-        self.observers.append(observer)
-
-    def turn_heading(self, heading, inc):
-        """Return the heading to the left (inc=+1) or right (inc=-1) of heading."""
-        return turn_heading(heading, inc)
-
 
 class Obstacle(Thing):
     """Something that can cause a bump, preventing an agent from
@@ -450,7 +217,6 @@ class Scream(Thing):
 
 
 class Wumpus(Agent):
-    screamed = False
     pass
 
 
@@ -459,29 +225,22 @@ class Stench(Thing):
 
 
 class Explorer(Agent):
-    holding = []
-    has_arrow = True
-    killed_by = ""
-    direction = Direction("right")
-
-    def can_grab(self, thing):
-        """Explorer can only grab gold"""
-        return thing.__class__ == Gold
+    pass
 
 
 class WumpusEnvironment(XYEnvironment):
     # Room should be 4x4 grid of rooms. The extra 2 for walls
     performance = None
-    def __init__(self, agent_program, import_filename=None, width=6, height=6, pit_probability=0.2):
+    def __init__(self, import_filename=None, width=6, height=6, pit_probability=0.2):
         self.starting_location=(1,1) #Chris said to fix this in place.
         self.pit_probability = pit_probability
         super().__init__(width, height)
         if import_filename is not None:
-            self._import_json(import_filename, agent_program)
+            self._import_json(import_filename)
         else:
-            self.init_world(agent_program)
+            self.init_world()
 
-    def init_world(self, program):
+    def init_world(self):
         """Spawn items in the world based on probabilities from the book"""
 
         "WALLS"
@@ -501,7 +260,7 @@ class WumpusEnvironment(XYEnvironment):
 
         "WUMPUS"
         w_x, w_y = self.random_location_inbounds(exclude=self.starting_location)
-        self.add_thing(Wumpus(lambda x: ""), (w_x, w_y), True)
+        self.add_thing(Wumpus(), (w_x, w_y), True)
         self.add_thing(Stench(), (w_x - 1, w_y), True)
         self.add_thing(Stench(), (w_x + 1, w_y), True)
         self.add_thing(Stench(), (w_x, w_y - 1), True)
@@ -511,7 +270,7 @@ class WumpusEnvironment(XYEnvironment):
         self.add_thing(Gold(), self.random_location_inbounds(exclude=self.starting_location), True)
 
         "AGENT"
-        self.add_thing(Explorer(program), self.starting_location, True)
+        self.add_thing(Explorer(), self.starting_location, True)
 
     def get_world(self, show_walls=True):
         """Return the items in the world"""
@@ -530,108 +289,6 @@ class WumpusEnvironment(XYEnvironment):
             result.append(row)
         return result
 
-    def percepts_from(self, agent, location, tclass=Thing):
-        """Return percepts from a given location,
-        and replaces some items with percepts from chapter 7."""
-        thing_percepts = {
-            Gold: Glitter(),
-            Wall: Bump(),
-            Wumpus: Stench(),
-            Pit: Breeze()}
-
-        """Agents don't need to get their percepts"""
-        thing_percepts[agent.__class__] = None
-
-        """Gold only glitters in its cell"""
-        if location != agent.location:
-            thing_percepts[Gold] = None
-
-        result = [thing_percepts.get(thing.__class__, thing) for thing in self.things
-                  if thing.location == location and isinstance(thing, tclass)]
-        return result if len(result) else [None]
-
-    def percept(self, agent):
-        """Return things in adjacent (not diagonal) cells of the agent.
-        Result format: [Left, Right, Up, Down, Center / Current location]"""
-        x, y = agent.location
-        # result = []
-        # result.append(self.percepts_from(agent, (x - 1, y)))
-        # result.append(self.percepts_from(agent, (x + 1, y)))
-        # result.append(self.percepts_from(agent, (x, y - 1)))
-        # result.append(self.percepts_from(agent, (x, y + 1)))
-        # result.append(self.percepts_from(agent, (x, y)))
-        result = self.percepts_from(agent, (x, y))
-
-        """The wumpus gives out a loud scream once it's killed."""
-        wumpus = [thing for thing in self.things if isinstance(thing, Wumpus)]
-        if len(wumpus) and not wumpus[0].alive and not wumpus[0].screamed:
-            result.append(Scream())
-            wumpus[0].screamed = True
-        
-        if agent.bump:
-            result.append(Bump())
-            agent.bump = False
-
-        return result
-
-    def execute_action(self, agent, action):
-        """Modify the state of the environment based on the agent's actions.
-        Performance score taken directly out of the book."""
-
-        if isinstance(agent, Explorer) and self.in_danger(agent):
-            return
-            
-        agent.bump = False
-        if action in ['TurnRight', 'TurnLeft', 'Forward', 'Grab']:
-            super().execute_action(agent, action)
-            agent.performance -= 1
-        elif action == 'Climb':
-            if agent.location == (1, 1):  # Agent can only climb out of (1,1)
-                agent.performance += 1000 if Gold() in agent.holding else 0
-                self.performance = agent.performance
-                self.delete_thing(agent)
-        elif action == 'Shoot':
-            """The arrow travels straight down the path the agent is facing"""
-            if agent.has_arrow:
-                arrow_travel = agent.direction.move_forward(agent.location)
-                while self.is_inbounds(arrow_travel):
-                    wumpus = [thing for thing in self.list_things_at(arrow_travel)
-                              if isinstance(thing, Wumpus)]
-                    if len(wumpus):
-                        wumpus[0].alive = False
-                        break
-                    arrow_travel = agent.direction.move_forward(agent.location)
-                agent.has_arrow = False
-        
-        if isinstance(agent, Explorer) and self.in_danger(agent): #Give immediate feedback
-            return
-
-    def in_danger(self, agent):
-        """Check if Explorer is in danger (Pit or Wumpus), if he is, kill him"""
-        for thing in self.list_things_at(agent.location):
-            if isinstance(thing, Pit) or (isinstance(thing, Wumpus) and thing.alive):
-                agent.alive = False
-                agent.performance -= 1000
-                agent.killed_by = thing.__class__.__name__
-                return True
-        return False
-
-    def is_done(self):
-        """The game is over when the Explorer is killed
-        or if he climbs out of the cave only at (1,1)."""
-        explorer = [agent for agent in self.agents if isinstance(agent, Explorer)]
-        if len(explorer):
-            if explorer[0].alive:
-                return False
-            else:
-                print("Death by {}.".format(explorer[0].killed_by))
-                print("Agent performance: {}".format(explorer[0].performance))
-        else:
-            print("Explorer climbed out ")#{}."
-            #       #.format("with Gold [+1000]!" if Gold() not in self.things else "without Gold [+0]"))
-            print("Agent performance: {}".format(self.performance))
-        return True
-
     def export_json(self, filename):
         world_dims = (self.width, self.height)
         world = self.get_world()
@@ -649,7 +306,7 @@ class WumpusEnvironment(XYEnvironment):
             to_export['world'].append(row)
         json.dump(to_export, open(filename, "w"), indent=4)
     
-    def _import_json(self, filename, agent_program):
+    def _import_json(self, filename):
         imported = json.load(open(filename, "r"))
         (self.width, self.height) = tuple(imported['world_dims'])
         world = imported['world']
@@ -659,7 +316,7 @@ class WumpusEnvironment(XYEnvironment):
                     if item is None:
                         continue
                     if item == "Explorer":
-                        self.add_thing(Explorer(agent_program), self.starting_location, True) #fixed to 1,1 as per Chris's instruction
+                        self.add_thing(Explorer(), self.starting_location, True) #fixed to 1,1 as per Chris's instruction
                         continue
                     if item == "Wumpus":
                         self.add_thing(Wumpus(lambda x: ""), (x, y), True)
