@@ -251,7 +251,7 @@ class WumpusEnvironment(XYEnvironment):
         "AGENT"
         self.add_thing(Explorer(), self.starting_location, True)
 
-    def get_world(self, show_walls=True):
+    def _private_get_world(self, show_walls=True):
         """Return the items in the world"""
         result = []
         x_start, y_start = (0, 0) if show_walls else (1, 1)
@@ -267,10 +267,17 @@ class WumpusEnvironment(XYEnvironment):
                 row.append(self.list_things_at((x, y)))
             result.append(row)
         return result
-
+    def get_world(self):
+        result = self._private_get_world()
+        for x in range(len(result)):
+            for y in range(len(result[x])):
+                if len(result[x][y]):
+                    result[x][y] = [z.__class__.__name__ for z in result[x][y]]
+        return result
+    
     def export_json(self, filename):
         world_dims = (self.width, self.height)
-        world = self.get_world()
+        world = self._private_get_world()
 
         excluded_items = ["Breeze", "Stench", "Glitter", "Bump", "Scream", "Arrow"]
         to_export = {'world_dims': world_dims, 'world': []}
