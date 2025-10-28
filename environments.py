@@ -298,7 +298,7 @@ class WumpusEnvironment(XYEnvironment):
                         self.add_thing(Explorer(), self.starting_location, True) #fixed to 1,1 as per Chris's instruction
                         continue
                     if item == "Wumpus":
-                        self.add_thing(Wumpus(lambda x: ""), (x, y), True)
+                        self.add_thing(Wumpus(), (x, y), True)
                         self.add_thing(Stench(), (x - 1, y), True)
                         self.add_thing(Stench(), (x, y - 1), True)
                         self.add_thing(Stench(), (x + 1, y), True)
